@@ -91,29 +91,37 @@ struct DayCell: View {
                         .padding(.bottom, 4)
                     
                 case .turnaround, .multiDayTrip, .layover:
-                    // 顯示航班號碼與線條
                     HStack(spacing: 0) {
-                        Spacer()
-                        
-                        // 只有長班的開始 或 單日班 才顯示航班號
-                        if let flightNum = day.flightNumber, (day.isTripStart || day.type == .turnaround) {
+                        // 左側線條 (如果是中間日或結束日，要接續前一天)
+                        if day.isContinuing || day.isTripEnd {
+                             Rectangle()
+                                .fill(indicatorColor)
+                                .frame(height: 3)
+                                .frame(maxWidth: .infinity) // 填滿左半邊
+                                .offset(y: 2)
+                        } else {
+                             Spacer() // 開始日左邊要是空的
+                        }
+
+                        // 航班號碼 (只在開始或單日班顯示，避免擁擠)
+                        if let flightNum = day.flightNumber, (day.isTripStart || day.type == .turnaround || day.isTripEnd) {
                             Text(flightNum)
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(indicatorColor)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.5)
+                                .layoutPriority(1) // 確保文字優先顯示
+                                .padding(.horizontal, 2)
                         }
                         
-                        // 畫線邏輯
-                        if day.isContinuing || day.type == .layover || day.isTripStart {
-                            // 向右延伸的線
-                            Rectangle()
+                        // 右側線條 (如果是開始日或中間日，要延伸到明天)
+                        if day.isContinuing || day.isTripStart || (day.type == .layover) {
+                             Rectangle()
                                 .fill(indicatorColor)
                                 .frame(height: 3)
-                                .frame(width: 25) // 線的長度
+                                .frame(maxWidth: .infinity) // 填滿右半邊
                                 .offset(y: 2)
-                        } else if day.isTripEnd {
-                             // 結束點可能需要向左的線 (視需求調整，目前簡化處理)
+                        } else {
+                             Spacer() // 結束日右邊要是空的
                         }
                     }
                     .padding(.bottom, 12)
